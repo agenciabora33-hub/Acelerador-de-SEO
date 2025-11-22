@@ -15,14 +15,17 @@ export interface RelatedTerm {
 }
 
 export interface AffiliateStrategy {
-  title: string;
-  description: string;
+  titlePt: string;
+  titleNative: string;
+  descriptionPt: string;
+  descriptionNative: string;
 }
 
 export interface AffiliateAnalysis {
   viabilityScore: number; // 0-100
   difficultyLevel: 'Baixa' | 'Média' | 'Alta';
-  verdict: string; // A short summary paragraph
+  verdictPt: string; // Updated to be bilingual
+  verdictNative: string; // New field
   lowCostStrategies: AffiliateStrategy[];
 }
 
@@ -43,8 +46,10 @@ export interface SEOAnalysis {
 }
 
 export interface GeneratedArticle {
-  seoTitle: string;
-  seoSubtitle: string;
+  seoTitlePt: string;
+  seoSubtitlePt: string;
+  seoTitleNative: string;
+  seoSubtitleNative: string;
   contentPt: string;
   contentSecondLanguage: string;
 }

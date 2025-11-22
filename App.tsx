@@ -49,6 +49,24 @@ const SimpleMarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
       return;
     }
 
+    // Images detection ![alt](url)
+    const imageMatch = trimmedLine.match(/^!\[(.*?)\]\((.*?)\)$/);
+    if (imageMatch) {
+       if (inList) flushList(index);
+       elements.push(
+         <div key={index} className="my-8">
+           <img 
+             src={imageMatch[2]} 
+             alt={imageMatch[1]} 
+             className="w-full rounded-xl shadow-md mb-2 object-cover max-h-[500px]"
+             loading="lazy"
+           />
+           <p className="text-center text-sm text-slate-500 italic">{imageMatch[1]}</p>
+         </div>
+       );
+       return;
+    }
+
     // Headers
     if (trimmedLine.startsWith('# ')) {
       if (inList) flushList(index);
@@ -131,9 +149,9 @@ const App: React.FC = () => {
   };
 
   const copyToClipboard = (article: GeneratedArticle) => {
-    let textToCopy = `--- VERSÃO EM PORTUGUÊS ---\n\n${article.contentPt}`;
+    let textToCopy = `--- VERSÃO EM PORTUGUÊS ---\nTITLE: ${article.seoTitlePt}\nDESC: ${article.seoSubtitlePt}\n\n${article.contentPt}`;
     if (article.contentSecondLanguage) {
-      textToCopy += `\n\n\n--- VERSÃO NATIVA (${analysis?.country || 'Local'}) ---\n\n${article.contentSecondLanguage}`;
+      textToCopy += `\n\n\n--- VERSÃO NATIVA (${analysis?.country || 'Local'}) ---\nTITLE: ${article.seoTitleNative}\nDESC: ${article.seoSubtitleNative}\n\n${article.contentSecondLanguage}`;
     }
     
     navigator.clipboard.writeText(textToCopy);
@@ -145,6 +163,7 @@ const App: React.FC = () => {
     const { affiliateAnalysis } = analysis;
     const isViable = affiliateAnalysis.viabilityScore >= 60;
     const circumference = 2 * Math.PI * 56;
+    const showNative = analysis.country !== 'Brasil';
 
     return (
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 col-span-1 lg:col-span-3">
@@ -196,9 +215,22 @@ const App: React.FC = () => {
                 {isViable ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <AlertTriangle className="w-5 h-5 text-amber-500" />}
                 Veredito da IA
               </h3>
-              <p className="text-slate-600 leading-relaxed text-sm md:text-base">
-                {affiliateAnalysis.verdict}
-              </p>
+              <div className="space-y-3">
+                 <div>
+                    <span className="text-xs uppercase text-slate-400 font-bold block mb-1">Português</span>
+                    <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                      {affiliateAnalysis.verdictPt}
+                    </p>
+                 </div>
+                 {showNative && (
+                   <div className="pl-4 border-l-2 border-slate-200">
+                      <span className="text-xs uppercase text-slate-400 font-bold block mb-1">Idioma Local ({analysis.country})</span>
+                      <p className="text-slate-500 leading-relaxed text-sm md:text-base italic">
+                        {affiliateAnalysis.verdictNative}
+                      </p>
+                   </div>
+                 )}
+              </div>
             </div>
 
             <div>
@@ -208,9 +240,17 @@ const App: React.FC = () => {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {affiliateAnalysis.lowCostStrategies.map((strategy, idx) => (
-                  <div key={idx} className="bg-brand-50/50 p-4 rounded-lg border border-brand-100">
-                    <h4 className="font-bold text-brand-700 text-sm mb-1">{strategy.title}</h4>
-                    <p className="text-xs text-slate-600">{strategy.description}</p>
+                  <div key={idx} className="bg-brand-50/50 p-4 rounded-lg border border-brand-100 flex flex-col gap-3">
+                    <div>
+                      <h4 className="font-bold text-brand-700 text-sm mb-1">{strategy.titlePt}</h4>
+                      <p className="text-xs text-slate-600">{strategy.descriptionPt}</p>
+                    </div>
+                    {showNative && (
+                      <div className="pt-2 border-t border-brand-200/50">
+                        <h4 className="font-bold text-slate-600 text-xs mb-0.5">{strategy.titleNative}</h4>
+                        <p className="text-xs text-slate-500 italic">{strategy.descriptionNative}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -257,16 +297,39 @@ const App: React.FC = () => {
                  <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">Metadados para Indexação (SEO)</h3>
               </div>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">SEO Title</p>
-                <p className="font-medium text-lg text-white">{generatedArticle.seoTitle}</p>
-              </div>
-              <div className="w-full h-px bg-slate-700"></div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Meta Description / Subtitle</p>
-                <p className="text-slate-300 leading-relaxed">{generatedArticle.seoSubtitle}</p>
-              </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">
+                {/* Portuguese Column */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                     <span className="text-xs font-bold text-brand-400 uppercase bg-brand-900/30 px-2 py-0.5 rounded">Português</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">SEO Title</p>
+                    <p className="font-medium text-lg text-white leading-snug">{generatedArticle.seoTitlePt}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Meta Description</p>
+                    <p className="text-slate-400 leading-relaxed text-sm">{generatedArticle.seoSubtitlePt}</p>
+                  </div>
+                </div>
+
+                {/* Native Column */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                     <span className="text-xs font-bold text-indigo-400 uppercase bg-indigo-900/30 px-2 py-0.5 rounded">
+                        {analysis?.country === 'Brasil' ? 'Alternativa' : `Idioma Local (${analysis?.country})`}
+                     </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">SEO Title</p>
+                    <p className="font-medium text-lg text-white leading-snug">{generatedArticle.seoTitleNative}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Meta Description</p>
+                    <p className="text-slate-400 leading-relaxed text-sm">{generatedArticle.seoSubtitleNative}</p>
+                  </div>
+                </div>
             </div>
           </div>
 
