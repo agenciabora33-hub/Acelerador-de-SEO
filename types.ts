@@ -11,27 +11,37 @@ export interface RegionData {
 
 export interface RelatedTerm {
   term: string;
+  translatedTerm: string; // Translation to Portuguese
   searchVolume: number;
 }
 
+export interface SearchQuery {
+  query: string;
+  translatedQuery: string;
+}
+
+export interface SubstackAnalysis {
+  viability: 'Baixa' | 'Média' | 'Alta';
+  strategy: string; // Detailed strategy for Substack
+  seoImpact: string; // How it affects SEO
+}
+
 export interface AffiliateStrategy {
-  titlePt: string;
-  titleNative: string;
-  descriptionPt: string;
-  descriptionNative: string;
+  title: string;
+  description: string;
 }
 
 export interface AffiliateAnalysis {
   viabilityScore: number; // 0-100
   difficultyLevel: 'Baixa' | 'Média' | 'Alta';
-  verdictPt: string; // Updated to be bilingual
-  verdictNative: string; // New field
+  productVerdict: string; // Detailed product analysis in PT
+  substackAnalysis: SubstackAnalysis; // Specific Substack deep dive
   lowCostStrategies: AffiliateStrategy[];
 }
 
 export interface SEOAnalysis {
   keyword: string;
-  country: string;
+  country: string; // Can be "Global" or a comma-separated list
   totalVolumeLast6Months: number;
   averageMonthlyVolume: number;
   cpcGoogle: number;
@@ -39,19 +49,22 @@ export interface SEOAnalysis {
   currencySymbol: string;
   trendPoints: TrendPoint[];
   topRegions: RegionData[];
-  relatedTerms: RelatedTerm[]; // Updated structure
+  relatedTerms: RelatedTerm[];
+  commonSearchQueries: SearchQuery[]; // New field for search intents
   articleTitles: string[];
   insightSummary: string;
-  affiliateAnalysis: AffiliateAnalysis; // New section
+  affiliateAnalysis: AffiliateAnalysis; 
 }
 
 export interface GeneratedArticle {
   seoTitlePt: string;
   seoSubtitlePt: string;
+  seoSlugPt: string; // New field for URL slug
   seoTitleNative: string;
   seoSubtitleNative: string;
+  seoSlugNative: string; // New field for URL slug
   contentPt: string;
-  contentSecondLanguage: string;
+  contentNative: string; // Renamed from contentSecondLanguage for clarity, this is the 1st version shown
 }
 
 export enum LoadingState {

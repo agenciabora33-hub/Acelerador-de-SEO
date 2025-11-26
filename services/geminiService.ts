@@ -11,7 +11,7 @@ const analysisSchema: Schema = {
     averageMonthlyVolume: { type: Type.INTEGER, description: "Average monthly search volume" },
     cpcGoogle: { type: Type.NUMBER, description: "Estimated Cost Per Click (CPC) for Google Ads in local currency" },
     cpcMeta: { type: Type.NUMBER, description: "Estimated Cost Per Click (CPC) for Meta Ads in local currency" },
-    currencySymbol: { type: Type.STRING, description: "Currency symbol for the country (e.g., R$, $, €, £)" },
+    currencySymbol: { type: Type.STRING, description: "Currency symbol (e.g., R$, $, €, £)" },
     insightSummary: { type: Type.STRING, description: "A brief 1-sentence summary of the trend direction in Portuguese." },
     trendPoints: {
       type: Type.ARRAY,
@@ -30,7 +30,7 @@ const analysisSchema: Schema = {
         type: Type.OBJECT,
         properties: {
           name: { type: Type.STRING, description: "City or Region name" },
-          volume: { type: Type.INTEGER, description: "Relative interest score (0-100) or volume" },
+          volume: { type: Type.INTEGER, description: "Estimated monthly search volume (number, not score)" },
         },
         required: ["name", "volume"],
       },
@@ -40,39 +40,58 @@ const analysisSchema: Schema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          term: { type: Type.STRING, description: "Related keyword" },
-          searchVolume: { type: Type.INTEGER, description: "Monthly search volume estimate for this term" }
+          term: { type: Type.STRING, description: "Related keyword in the target language" },
+          translatedTerm: { type: Type.STRING, description: "Translation of the term to Portuguese (PT-BR)" },
+          searchVolume: { type: Type.INTEGER, description: "Monthly search volume estimate" }
         },
-        required: ["term", "searchVolume"]
+        required: ["term", "translatedTerm", "searchVolume"]
       },
+    },
+    commonSearchQueries: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          query: { type: Type.STRING, description: "Actual search phrase used by people (e.g., 'buy X', 'X reviews', 'is X safe')" },
+          translatedQuery: { type: Type.STRING, description: "Translation of the search phrase to Portuguese" }
+        },
+        required: ["query", "translatedQuery"]
+      },
+      description: "List of 6-8 common ways/phrases people use to search for this product in search engines."
     },
     articleTitles: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "10 Clickbait/Viral titles for articles in Portuguese"
+      description: "10 Viral/High-Engagement article titles in Portuguese"
     },
     affiliateAnalysis: {
       type: Type.OBJECT,
       properties: {
         viabilityScore: { type: Type.INTEGER, description: "0 to 100 score for affiliate marketing viability" },
         difficultyLevel: { type: Type.STRING, enum: ["Baixa", "Média", "Alta"] },
-        verdictPt: { type: Type.STRING, description: "Detailed paragraph analyzing viability in Portuguese (PT-BR)" },
-        verdictNative: { type: Type.STRING, description: "Detailed paragraph analyzing viability in the target country's native language" },
+        productVerdict: { type: Type.STRING, description: "A Complete, deep analysis of the product, its market fit, and potential for sales. Written in Portuguese." },
+        substackAnalysis: {
+          type: Type.OBJECT,
+          properties: {
+            viability: { type: Type.STRING, enum: ["Baixa", "Média", "Alta"] },
+            strategy: { type: Type.STRING, description: "Deep analysis of how to use Substack for this specific product. Best content angles, newsletter ideas." },
+            seoImpact: { type: Type.STRING, description: "How this Substack strategy aids SEO and engagement." }
+          },
+          required: ["viability", "strategy", "seoImpact"]
+        },
         lowCostStrategies: {
           type: Type.ARRAY,
           items: {
             type: Type.OBJECT,
             properties: {
-              titlePt: { type: Type.STRING, description: "Strategy title in Portuguese" },
-              titleNative: { type: Type.STRING, description: "Strategy title in target country language" },
-              descriptionPt: { type: Type.STRING, description: "Strategy details in Portuguese" },
-              descriptionNative: { type: Type.STRING, description: "Strategy details in target country language" }
+              title: { type: Type.STRING, description: "Strategy title in Portuguese" },
+              description: { type: Type.STRING, description: "Strategy details in Portuguese" }
             },
-            required: ["titlePt", "titleNative", "descriptionPt", "descriptionNative"]
+            required: ["title", "description"]
           }
         }
       },
-      required: ["viabilityScore", "difficultyLevel", "verdictPt", "verdictNative", "lowCostStrategies"]
+      required: ["viabilityScore", "difficultyLevel", "productVerdict", "substackAnalysis", "lowCostStrategies"]
     }
   },
   required: [
@@ -84,6 +103,7 @@ const analysisSchema: Schema = {
     "trendPoints",
     "topRegions",
     "relatedTerms",
+    "commonSearchQueries",
     "articleTitles",
     "insightSummary",
     "affiliateAnalysis"
@@ -93,37 +113,36 @@ const analysisSchema: Schema = {
 const articleSchema: Schema = {
   type: Type.OBJECT,
   properties: {
-    seoTitlePt: { type: Type.STRING, description: "Optimized SEO Title in Portuguese (Brazil)" },
-    seoSubtitlePt: { type: Type.STRING, description: "Optimized Meta Description in Portuguese (Brazil)" },
-    seoTitleNative: { type: Type.STRING, description: "Optimized SEO Title in the target country's native language" },
-    seoSubtitleNative: { type: Type.STRING, description: "Optimized Meta Description in the target country's native language" },
-    contentPt: { type: Type.STRING, description: "The complete blog article written in Portuguese (Brazil)." },
-    contentSecondLanguage: { type: Type.STRING, description: "The complete blog article written in the target country's native language (if different from PT)." }
+    seoTitlePt: { type: Type.STRING, description: "Optimized SEO Title in Portuguese" },
+    seoSubtitlePt: { type: Type.STRING, description: "Optimized Meta Description in Portuguese" },
+    seoSlugPt: { type: Type.STRING, description: "Optimized URL Slug in Portuguese (e.g. 'nome-do-artigo-guia')" },
+    seoTitleNative: { type: Type.STRING, description: "Optimized SEO Title in English (or target language)" },
+    seoSubtitleNative: { type: Type.STRING, description: "Optimized Meta Description in English (or target language)" },
+    seoSlugNative: { type: Type.STRING, description: "Optimized URL Slug in English (e.g. 'article-name-guide')" },
+    contentPt: { type: Type.STRING, description: "The complete blog article in Portuguese." },
+    contentNative: { type: Type.STRING, description: "The complete blog article in English (or target language)." }
   },
-  required: ["seoTitlePt", "seoSubtitlePt", "seoTitleNative", "seoSubtitleNative", "contentPt", "contentSecondLanguage"]
+  required: ["seoTitlePt", "seoSubtitlePt", "seoSlugPt", "seoTitleNative", "seoSubtitleNative", "seoSlugNative", "contentPt", "contentNative"]
 };
 
-export const fetchSEOAnalysis = async (keyword: string, country: string): Promise<SEOAnalysis> => {
+export const fetchSEOAnalysis = async (keyword: string, countries: string): Promise<SEOAnalysis> => {
   try {
     const response = await genAI.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Analyze the search trends for the keyword or product: "${keyword}" focusing on the country: "${country}". 
+      contents: `Analyze the search trends for the product/keyword: "${keyword}".
+      Target Market(s): "${countries}".
       
       IMPORTANT RULES:
-      1. Provide estimated data for the last 6 months based on real search behavior in ${country}.
-      2. Currency must be the local currency of ${country}.
-      3. Top Regions must be cities/states inside ${country}.
-      4. Related terms must include the search volume.
-      5. ALL textual explanations (insightSummary, articleTitles) MUST be in PORTUGUESE (PT-BR).
+      1. Provide estimated data for the last 6 months. If "Global" is selected, aggregate worldwide data.
+      2. Top Regions: If Global, list top Countries. If specific country, list top cities/regions. Provide estimated search volumes numbers.
+      3. **Related Terms**: Provide the top keywords in the local language AND their Portuguese translation.
+      4. **Common Search Queries**: Provide 6-8 specific phrases/questions people type into Google to find this (e.g., buying intent, reviews, comparisons) with PT translations.
+      5. **Affiliate Analysis (Portuguese Only)**: 
+         - Perform a COMPLETE analysis of the product for affiliates.
+         - **Substack Deep Dive**: Specifically analyze the viability of creating a Substack blog. How can it generate high engagement? What is the best content path?
+      6. **Article Titles**: Suggest 10 titles that are highly engaging, viral, or "click-worthy" to attract traffic.
       
-      For the Affiliate Analysis:
-      - Evaluate if it's viable to sell this as an affiliate.
-      - Suggest LOW COST strategies (organic traffic, social media, etc).
-      - Be realistic about competition.
-      - **CRITICAL**: Provide the verdict and strategy descriptions in BOTH Portuguese (PT-BR) AND the Native Language of ${country}.
-      
-      6. The 'relatedTerms' keywords themselves should be in the language spoken in ${country}, but if appropriate, include variations.
-      7. 'articleTitles' must be in Portuguese, optimized for high CTR.`,
+      All text outputs must be in Portuguese (PT-BR), except the original related terms and native queries.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: analysisSchema,
@@ -137,7 +156,7 @@ export const fetchSEOAnalysis = async (keyword: string, country: string): Promis
     
     return {
       keyword,
-      country,
+      country: countries,
       ...data,
     };
   } catch (error) {
@@ -152,27 +171,33 @@ export const generateBlogPost = async (title: string, keyword: string, country: 
     
     const response = await genAI.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `You are a world-class SEO and SXO (Search Experience Optimization) copywriter.
+      contents: `You are an elite copywriter specializing in Viral Content and SEO.
       
-      Task: Write a complete, humanized blog article based on the title: "${title}".
+      Task: Write a COMPLETE, detailed blog article based on the title: "${title}".
       Focus Keyword: "${keyword}".
-      Target Country Market: "${country}".
-      Secondary Keywords to include naturally: ${termsString}.
-
-      CRITICAL INSTRUCTIONS:
-      1. You MUST generate TWO versions of the article.
-      2. **Version 1 (contentPt)**: Written in Portuguese (Brazil).
-      3. **Version 2 (contentSecondLanguage)**: Written in the native language of "${country}". (If the country is Brazil, you can leave this string empty or write a variation).
-      4. **Structure**: Both articles must use standard Markdown (H1, H2, H3, Bold, Bullet points).
-      5. **Substack Format**: The content must be ready to copy and paste into Substack. Start with a catchy Headline (H1) and a Subtitle.
-      6. **SEO**: Create separate optimized 'seoTitle' and 'seoSubtitle' for BOTH languages (Portuguese and the Target Country Language).
-      7. **IMAGES**: You MUST include 2 images in the markdown content using the following syntax:
-         ![Commercial Image of ${keyword}](https://image.pollinations.ai/prompt/${keyword}%20commercial%20product%20shot%20professional%20lighting?nologo=true)
-         ![Benefits of ${keyword}](https://image.pollinations.ai/prompt/${keyword}%20benefits%20demonstration%20lifestyle?nologo=true)
-         Place the Commercial Image near the top, and the Benefits Image in the middle of the article.
-
-      Make the content engaging, storytelling-driven, and highly readable. Avoid generic AI tone.
-      `,
+      Context: ${country}.
+      
+      INSTRUCTIONS:
+      1. **Version 1 (contentNative)**: Write the article in **ENGLISH** (or the native language of ${country} if not Global). IT MUST BE THE FIRST VERSION.
+      2. **Version 2 (contentPt)**: Write the article in **PORTUGUESE (Brazil)**.
+      3. **SEO Metadata**: Create optimized Title, Meta Description, AND a URL Slug (handle) for both versions.
+      
+      FORMATTING:
+      - Use standard Markdown.
+      - **Substack Style**: Catchy H1, Subtitle, short punchy paragraphs, high engagement.
+      - **Images**: Insert 2 Pollinations.ai images in Markdown format:
+        ![${keyword} Commercial](https://image.pollinations.ai/prompt/commercial%20shot%20of%20${keyword}?nologo=true)
+        ![${keyword} Benefits](https://image.pollinations.ai/prompt/${keyword}%20benefits%20lifestyle?nologo=true)
+      
+      MANDATORY:
+      - **Anti-Counterfeit Warning**: You MUST include a dedicated section warning users about fake products and emphasizing the importance of buying from the official site.
+      - **CTAs**: You MUST insert exactly 3 Call-To-Action (CTA) placeholders in the text (Beginning, Middle, End) using this EXACT format:
+        > **🎯 CLIQUE AQUI:** [Persuasive text to buy ${keyword} now]
+      
+      CRITICAL:
+      - Ensure BOTH versions are complete. Do not cut off the text.
+      - Make it emotional and persuasive.
+      - The 'contentNative' field MUST contain the full English article (at least 800 words, with introduction, body, and conclusion). Do not truncate it.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: articleSchema,
