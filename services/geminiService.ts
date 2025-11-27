@@ -8,6 +8,7 @@ const analysisSchema: Schema = {
   type: Type.OBJECT,
   properties: {
     totalVolumeLast6Months: { type: Type.INTEGER, description: "Estimated total searches in the last 6 months" },
+    totalVolumeLast12Months: { type: Type.INTEGER, description: "Estimated total searches in the last 12 months" },
     averageMonthlyVolume: { type: Type.INTEGER, description: "Average monthly search volume" },
     cpcGoogle: { type: Type.NUMBER, description: "Estimated Cost Per Click (CPC) for Google Ads in local currency" },
     cpcMeta: { type: Type.NUMBER, description: "Estimated Cost Per Click (CPC) for Meta Ads in local currency" },
@@ -23,6 +24,7 @@ const analysisSchema: Schema = {
         },
         required: ["month", "searches"],
       },
+      description: "Data for the last 12 months"
     },
     topRegions: {
       type: Type.ARRAY,
@@ -95,7 +97,7 @@ const analysisSchema: Schema = {
     }
   },
   required: [
-    "totalVolumeLast6Months",
+    "totalVolumeLast12Months",
     "averageMonthlyVolume",
     "cpcGoogle",
     "cpcMeta",
@@ -119,10 +121,13 @@ const articleSchema: Schema = {
     seoTitleNative: { type: Type.STRING, description: "Optimized SEO Title in English (or target language)" },
     seoSubtitleNative: { type: Type.STRING, description: "Optimized Meta Description in English (or target language)" },
     seoSlugNative: { type: Type.STRING, description: "Optimized URL Slug in English (e.g. 'article-name-guide')" },
+    pinterestTitle: { type: Type.STRING, description: "Catchy title optimized for Pinterest" },
+    pinterestDescription: { type: Type.STRING, description: "Pinterest description with keywords and hashtags" },
+    pinterestTags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of tags/hashtags for Pinterest" },
     contentPt: { type: Type.STRING, description: "The complete blog article in Portuguese." },
     contentNative: { type: Type.STRING, description: "The complete blog article in English (or target language)." }
   },
-  required: ["seoTitlePt", "seoSubtitlePt", "seoSlugPt", "seoTitleNative", "seoSubtitleNative", "seoSlugNative", "contentPt", "contentNative"]
+  required: ["seoTitlePt", "seoSubtitlePt", "seoSlugPt", "seoTitleNative", "seoSubtitleNative", "seoSlugNative", "pinterestTitle", "pinterestDescription", "pinterestTags", "contentPt", "contentNative"]
 };
 
 export const fetchSEOAnalysis = async (keyword: string, countries: string): Promise<SEOAnalysis> => {
@@ -133,7 +138,7 @@ export const fetchSEOAnalysis = async (keyword: string, countries: string): Prom
       Target Market(s): "${countries}".
       
       IMPORTANT RULES:
-      1. Provide estimated data for the last 6 months. If "Global" is selected, aggregate worldwide data.
+      1. Provide estimated data for the last 12 months. If "Global" is selected, aggregate worldwide data.
       2. Top Regions: If Global, list top Countries. If specific country, list top cities/regions. Provide estimated search volumes numbers.
       3. **Related Terms**: Provide the top keywords in the local language AND their Portuguese translation.
       4. **Common Search Queries**: Provide 6-8 specific phrases/questions people type into Google to find this (e.g., buying intent, reviews, comparisons) with PT translations.
@@ -181,6 +186,7 @@ export const generateBlogPost = async (title: string, keyword: string, country: 
       1. **Version 1 (contentNative)**: Write the article in **ENGLISH** (or the native language of ${country} if not Global). IT MUST BE THE FIRST VERSION.
       2. **Version 2 (contentPt)**: Write the article in **PORTUGUESE (Brazil)**.
       3. **SEO Metadata**: Create optimized Title, Meta Description, AND a URL Slug (handle) for both versions.
+      4. **Pinterest Metadata**: Create a specific catchy title, description, and tags for Pinterest.
       
       FORMATTING:
       - Use standard Markdown.
