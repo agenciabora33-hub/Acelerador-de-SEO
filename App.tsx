@@ -499,10 +499,13 @@ const App: React.FC = () => {
                 <Sparkles className="w-4 h-4" />
                 <span>Powered by Gemini 2.5 Flash</span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 max-w-3xl">
-                Descubra tendências globais <span className="text-brand-500">em segundos</span>.
+              <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-4">
+                TrendScope AI
               </h1>
-              <p className="text-lg text-slate-600 mb-10 max-w-2xl mx-auto">
+              <h2 className="text-2xl md:text-3xl text-slate-700 mb-6 font-medium">
+                Descubra tendências globais <span className="text-brand-500">em segundos</span>.
+              </h2>
+              <p className="text-lg text-slate-500 mb-10 max-w-2xl mx-auto">
                 Insira um produto ou palavra-chave para visualizar volumes de pesquisa, interesse regional, viabilidade de afiliação e estratégias Substack.
               </p>
             </>
